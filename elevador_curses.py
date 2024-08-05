@@ -10,8 +10,8 @@ import time
 # Variáveis -------------------------------------
 
 desligar_elevador = False
-fila_subindo = []
-fila_descendo = []
+fila_subir = []
+fila_descer = []
 direcao_elevador = 'parado'
 andar_selecionado = ''
 andar_atual = 0
@@ -19,41 +19,38 @@ andar_atual = 0
 # -----------------------------------------------
 
 def parar_nos_andares():
-    global fila_subindo, fila_descendo
-    
-    #TODO: MARK: Arrumar problema: 
-    # elevador subindo, pressiona para baixo, 
-    # andar selecionado maior que andar atual,
-    # acaba pegando esse andar, não deveria acontecer.
-    # ============================================
-    # Exemplo: 
-    # andar selecionado = 6 
-    # andar atual = 4
-    # lista_subindo = [8]
-    # lista_descendo = [6]
-    # ordem que deveria ser: [8, 6]
-    # ordem que está saindo agora: [6, 8]
-    
+    global fila_subir, fila_descer
+        
     if direcao_elevador == 'subindo':
-        if int(andar_atual) in fila_subindo:
-            fila_subindo.remove(int(andar_atual))
-        elif fila_descendo and int(andar_atual) == fila_descendo[0]:
-            fila_descendo.remove(int(andar_atual))
+        if int(andar_atual) in fila_subir:
+            fila_subir.remove(int(andar_atual))
+        elif fila_descer and (int(andar_atual) == fila_descer[0]):
+            if (fila_subir) and (fila_descer[0] > fila_subir[0]):
+                fila_descer.remove(int(andar_atual))
+            elif (not fila_subir):
+                fila_descer.remove(int(andar_atual))
         
     elif direcao_elevador == 'descendo':
-        if int(andar_atual) in fila_descendo:
-            fila_descendo.remove(int(andar_atual))
-        elif fila_subindo and int(andar_atual) == fila_subindo[0]:
-            fila_subindo.remove(int(andar_atual))
+        if int(andar_atual) in fila_descer:
+            fila_descer.remove(int(andar_atual))
+        elif fila_subir and int(andar_atual) == fila_subir[0]:
+            if (fila_descer) and (fila_descer[0] > fila_subir[0]):
+                fila_subir.remove(int(andar_atual))
+            elif (not fila_descer):
+                fila_subir.remove(int(andar_atual))
 
 
 def movimentar_elevador():
     global andar_atual, direcao_elevador
     
-    max_subindo = max(fila_subindo) if fila_subindo else float('-inf')
-    max_descendo = max(fila_descendo) if fila_descendo else float('-inf')
+    max_subindo = max(fila_subir) if fila_subir else float('-inf')
+    max_descendo = max(fila_descer) if fila_descer else float('-inf')
+    valor_maximo = max(max_subindo, max_descendo)
     
-    if (fila_subindo or fila_descendo) and (int(andar_atual) < max(max_subindo, max_descendo)):
+    if ((fila_subir or fila_descer) 
+        and (int(andar_atual) < valor_maximo) 
+        and (direcao_elevador != 'descendo')
+        ):
         direcao_elevador = 'subindo'
         andar_atual += 0.1
     
@@ -66,16 +63,16 @@ def movimentar_elevador():
 
 def adicionar_a_fila(evento):
     global andar_selecionado
-    global fila_descendo, fila_subindo
+    global fila_descer, fila_subir
     
     andar_selecionado = int(andar_selecionado)
-    if evento == 'up' and andar_selecionado not in fila_subindo:
-        fila_subindo.append(andar_selecionado)
-    elif evento == 'down' and andar_selecionado not in fila_descendo:
-        fila_descendo.append(andar_selecionado)
+    if evento == 'up' and andar_selecionado not in fila_subir:
+        fila_subir.append(andar_selecionado)
+    elif evento == 'down' and andar_selecionado not in fila_descer:
+        fila_descer.append(andar_selecionado)
 
-    fila_descendo.sort(reverse=True)
-    fila_subindo.sort(reverse=True)
+    fila_descer.sort(reverse=True)
+    fila_subir.sort(reverse=True)
     andar_selecionado = ''
 
 
@@ -118,13 +115,17 @@ def elevador(stdscr):
     while True:
         stdscr.clear()
         stdscr.addstr(0, 0, "Andares: 0 - 28")
-        stdscr.addstr(1, 0, f"Andar atual: {int(andar_atual)}")
-        stdscr.addstr(2, 0, f"Elevador {direcao_elevador}")
-        stdscr.addstr(3, 0, f"Fila subindo: [{', '.join(map(str, fila_subindo))}]")
-        stdscr.addstr(4, 0, f"Fila descendo: [{', '.join(map(str, fila_descendo))}]")
-        stdscr.addstr(5, 0, f"Andar selecionado: {andar_selecionado}")
-        stdscr.addstr(6, 0, "Aperte seta para cima ou seta para baixo para confirmar o andar e a direcao.")
-        stdscr.addstr(7, 0, "Aperte 'esc' para encerrar o programa.")
+        stdscr.addstr(1, 0, f"Fila subindo: [{', '.join(map(str, fila_subir))}]")
+        stdscr.addstr(2, 0, f"Fila descendo: [{', '.join(map(str, fila_descer))}]")
+        stdscr.addstr(3, 0, f"Elevador {direcao_elevador}")
+        stdscr.addstr(4, 0, f"Andar atual: {int(andar_atual)}")
+        stdscr.addstr(6, 0, f"Andar selecionado: {andar_selecionado}")
+        if andar_selecionado and int(andar_selecionado) in range(0, 29):
+            stdscr.addstr(7, 0, "Andar válido")
+        else:
+            stdscr.addstr(7, 0, "Andar inválido")
+        stdscr.addstr(8, 0, "Aperte seta para cima ou seta para baixo para confirmar o andar e a direcao.")
+        stdscr.addstr(9, 0, "Aperte 'esc' para encerrar o programa.")
         stdscr.refresh()
         
         if desligar_elevador:
