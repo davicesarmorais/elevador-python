@@ -21,45 +21,53 @@ andar_atual = 0
 
 def parar_nos_andares():
     global fila_subir, fila_descer
-        
-    if direcao_elevador == 'subindo':
+
+    if direcao_elevador == "subindo":
+        # Pega no caminho
         if int(andar_atual) in fila_subir:
             fila_subir.remove(int(andar_atual))
-        elif fila_descer and (int(andar_atual) == fila_descer[0]):
-            if (fila_subir) and (fila_descer[0] > fila_subir[0]):
-                fila_descer.remove(int(andar_atual))
-            elif (not fila_subir):
-                fila_descer.remove(int(andar_atual))
         
-    elif direcao_elevador == 'descendo':
+        # Muda de direção
+        elif fila_descer and (int(andar_atual) == fila_descer[0]):
+            if ((not fila_subir) 
+            or (fila_subir and (fila_descer[0] > fila_subir[-1]))):  
+                fila_descer.remove(int(andar_atual))
+
+    elif direcao_elevador == "descendo":
+        # Pega no caminho
         if int(andar_atual) in fila_descer:
             fila_descer.remove(int(andar_atual))
-        elif fila_subir and int(andar_atual) == fila_subir[0]:
-            if (fila_descer) and (fila_descer[0] > fila_subir[0]):
-                fila_subir.remove(int(andar_atual))
-            elif (not fila_descer):
+        
+        # Muda de direção
+        elif fila_subir and (int(andar_atual) == fila_subir[0]):
+            if ((not fila_descer) 
+            or (fila_descer and (fila_descer[-1] > fila_subir[0]))):  
                 fila_subir.remove(int(andar_atual))
 
 
 def movimentar_elevador():
     global andar_atual, direcao_elevador
-    
-    max_subindo = max(fila_subir) if fila_subir else float('-inf')
-    max_descendo = max(fila_descer) if fila_descer else float('-inf')
-    valor_maximo = max(max_subindo, max_descendo)
-    
-    if ((fila_subir or fila_descer) 
-        and (int(andar_atual) < valor_maximo) 
-        and (direcao_elevador != 'descendo')
-        ):
-        direcao_elevador = 'subindo'
+
+    valor_maximo = max(max(fila_subir, default=float('-inf')), 
+                       max(fila_descer, default=float('-inf')))
+
+    valor_minimo = min(min(fila_subir, default=float('+inf')), 
+                       min(fila_descer, default=float('+inf')))
+
+    if ((fila_subir or fila_descer)
+    and (int(andar_atual) < valor_maximo)
+    and (direcao_elevador != "descendo")):
+        direcao_elevador = "subindo"
         andar_atual += 0.1
-    
-    elif andar_atual > 0:
-        direcao_elevador = 'descendo'
+
+    elif ((andar_atual > valor_minimo)  
+    or (andar_atual > 0)
+    and (not fila_descer and not fila_subir)):  
+        direcao_elevador = "descendo"
         andar_atual -= 0.1
+    
     else:
-        direcao_elevador = 'parado'
+        direcao_elevador = "parado"
 
 
 def adicionar_a_fila(evento):
@@ -73,7 +81,7 @@ def adicionar_a_fila(evento):
         fila_descer.append(andar_selecionado)
 
     fila_descer.sort(reverse=True)
-    fila_subir.sort(reverse=True)
+    fila_subir.sort(reverse=False)
     andar_selecionado = ''
 
 
@@ -87,24 +95,6 @@ def on_key_event(event):
     andar_selecionado = random.randrange(0, 29)
     evento = random.choice(['up', 'down'])
     adicionar_a_fila(evento)
-    
-    #caracteres_permitidos = [ '1', '2', '3', '4', '5','6', '7', 
-    #                         '8', '9', '0', 'up', 'down', 'backspace' ]
-    #
-    #if event.name not in caracteres_permitidos:
-    #    return
-    #
-    #if event.name not in ['up', 'down', 'backspace']:
-    #    andar_selecionado += event.name
-    #
-    #if not andar_selecionado:
-    #    return
-    #
-    #elif event.name == 'backspace':
-    #    andar_selecionado = andar_selecionado[:-1]
-    #   
-    #elif (event.name in ['up', 'down']) and int(andar_selecionado) in range(0, 29):
-    #    adicionar_a_fila(event.name)
 
 
 def start_key_listener():
@@ -125,10 +115,7 @@ def elevador(stdscr):
         stdscr.addstr(3, 0, f"Elevador {direcao_elevador}")
         stdscr.addstr(4, 0, f"Andar atual: {int(andar_atual)}")
         stdscr.addstr(6, 0, f"Andar selecionado: {andar_selecionado}")
-        #if andar_selecionado and int(andar_selecionado) in range(0, 29):
-        #    stdscr.addstr(7, 0, "Andar válido")
-        #else:
-        #    stdscr.addstr(7, 0, "Andar inválido")
+
         stdscr.addstr(7, 0, "Isso é uma demonstração (aperte qualquer tecla para selecionar um andar).")
         stdscr.addstr(8, 0, "Aperte 'esc' para encerrar o programa.")
         stdscr.refresh()
